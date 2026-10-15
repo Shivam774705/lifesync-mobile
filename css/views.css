@@ -1599,7 +1599,7 @@
 }
 
 /* ==========================================================================
-   MOBILE BOTTOM NAVIGATION BAR
+   MOBILE BOTTOM NAVIGATION BAR (PREMIUM APP-STYLE DOCK)
    ========================================================================== */
 .mobile-bottom-nav {
   display: none;
@@ -1607,54 +1607,100 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 64px;
-  background: rgba(15, 22, 35, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border-glass-hover);
+  height: 60px;
+  background: rgba(11, 15, 23, 0.92);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   z-index: 10000;
   justify-content: space-around;
-  align-items: center;
-  padding: 4px 6px;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+  align-items: stretch;
+  padding: 0;
+  box-shadow: 0 -2px 24px rgba(0, 0, 0, 0.5);
 }
 [data-theme="light"] .mobile-bottom-nav {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.92);
+  border-top-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.08);
 }
+
 .bnav-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
   background: transparent;
   border: none;
-  color: var(--text-muted);
-  font-size: 10px;
+  color: var(--text-subtle);
+  font-size: 9px;
   font-weight: 600;
+  letter-spacing: 0.3px;
   cursor: pointer;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+  padding: 6px 2px;
+  border-radius: 0;
+  transition: color 0.2s ease, transform 0.2s ease;
   flex: 1;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
 }
 .bnav-btn svg {
-  stroke-width: 2.2;
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.8;
+  transition: stroke 0.2s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.bnav-btn:hover {
-  color: var(--text-main);
+.bnav-btn span {
+  transition: color 0.2s ease;
 }
+.bnav-btn:active {
+  transform: scale(0.92);
+}
+.bnav-btn:active svg {
+  transform: scale(0.9);
+}
+
+/* Active state with dot indicator */
 .bnav-btn.active {
   color: var(--primary);
 }
 .bnav-btn.active svg {
   stroke: var(--primary);
-  filter: drop-shadow(0 0 6px var(--primary-glow));
+  transform: scale(1.08);
+  filter: drop-shadow(0 0 4px var(--primary-glow));
+}
+.bnav-btn.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2.5px;
+  background: var(--primary);
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 0 8px var(--primary-glow);
+  animation: bnav-dot-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bnav-dot-in {
+  from { width: 0; opacity: 0; }
+  to { width: 20px; opacity: 1; }
+}
+
+/* Safe area padding for bottom nav */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .mobile-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* ==========================================================================
-   RESPONSIVE MEDIA QUERIES (MOBILE APP OPTIMIZATION)
+   RESPONSIVE MEDIA QUERIES (MOBILE APP OPTIMIZATION - Vivo T3 / 6.5" phones)
    ========================================================================== */
+
+/* Tablet & small desktop */
 @media (max-width: 1024px) {
   .metrics-grid, .analytics-stats-grid, .pillars-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1667,53 +1713,498 @@
   }
 }
 
+/* Mobile phones */
 @media (max-width: 768px) {
+
+  /* --- SIDEBAR: slide-in drawer --- */
   .app-sidebar {
     position: fixed;
     left: 0;
     top: 0;
     bottom: 0;
+    width: 280px;
     transform: translateX(-100%);
     box-shadow: var(--shadow-lg);
     z-index: 20000;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .app-sidebar.open {
     transform: translateX(0);
   }
+
+  /* Sidebar overlay when open */
+  .app-sidebar.open::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 280px;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+  }
+
   .sidebar-toggle {
     display: flex;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
   }
+
+  /* --- HEADER: compact mobile bar --- */
+  .app-header {
+    height: 52px;
+    padding: 0 12px;
+    padding-top: env(safe-area-inset-top, 0px);
+    gap: 8px;
+  }
+  .header-left {
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+  .greeting-box {
+    min-width: 0;
+  }
+  .greeting-box .greeting-sub {
+    display: none;
+  }
+  .page-title {
+    font-size: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Hide non-essential header items on mobile */
+  .header-right {
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  #btn-install-apk-prompt span {
+    display: none;
+  }
+  #btn-install-apk-prompt {
+    width: 34px;
+    height: 34px;
+    padding: 0 !important;
+    justify-content: center;
+    min-width: 34px;
+    border-radius: var(--radius-md) !important;
+  }
+  .currency-pill {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+  .currency-pill .pill-label {
+    display: none;
+  }
+  .currency-dropdown {
+    font-size: 12px;
+  }
+  .header-right .btn-icon {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+  }
+
+  /* --- BOTTOM NAV: show on mobile --- */
   .mobile-bottom-nav {
     display: flex;
   }
+
+  /* --- CONTENT AREA: proper padding --- */
   .content-scrollable {
-    padding: 14px 14px 80px 14px; /* padding-bottom for bottom navigation */
+    padding: 14px 14px calc(72px + env(safe-area-inset-bottom, 0px)) 14px;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
-  .hero-content, .habit-hero-banner, .parttime-hero-banner, .coach-hero-banner {
+
+  /* --- DASHBOARD HERO CARD --- */
+  .hero-summary-card {
+    padding: 16px 14px;
+    margin-bottom: 14px;
+    border-radius: var(--radius-lg);
+  }
+  .hero-glow-bg {
+    opacity: 0.5;
+  }
+  .hero-content {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
   }
-  .hero-actions, .habit-hero-actions, .parttime-quick-actions {
+  .hero-badge {
+    font-size: 9px;
+    padding: 3px 8px;
+    margin-bottom: 6px;
+  }
+  .hero-title {
+    font-size: 17px;
+    line-height: 1.3;
+  }
+  .hero-sub {
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+  .hero-actions {
     width: 100%;
-    justify-content: flex-start;
+    display: flex;
+    gap: 8px;
   }
-  .metrics-grid, .analytics-stats-grid, .pillars-grid {
+  .hero-actions .btn {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 13px;
+    border-radius: var(--radius-md);
+  }
+
+  /* --- KPI METRICS: 2-column grid on mobile --- */
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .kpi-card {
+    padding: 14px;
+    border-radius: var(--radius-md);
+  }
+  .kpi-header {
+    margin-bottom: 8px;
+  }
+  .kpi-title {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+  .kpi-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+  .kpi-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+  .kpi-value {
+    font-size: 20px;
+    letter-spacing: -0.3px;
+  }
+  .kpi-subtext {
+    font-size: 10.5px;
+    margin-bottom: 8px;
+  }
+  .kpi-footer-progress {
+    margin-top: auto;
+  }
+
+  /* --- ANALYTICS & PILLARS: 1 column on mobile --- */
+  .analytics-stats-grid, .pillars-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
+
+  /* --- DASHBOARD PANELS --- */
+  .dash-split-grid, .charts-grid-2col, .tasks-kanban-board {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .glass-panel {
+    border-radius: var(--radius-md) !important;
+  }
+
+  .panel-header {
+    padding: 14px 14px;
+  }
+  .panel-title {
+    font-size: 14px;
+  }
+
+  /* --- HABIT / PARTTIME / LIFECOACH HERO BANNERS --- */
+  .habit-hero-banner,
+  .parttime-hero-banner,
+  .coach-hero-banner {
+    padding: 16px 14px !important;
+  }
+  .habit-hero-content,
+  .parttime-content-col,
+  .coach-header-info {
+    width: 100%;
+  }
+  .habit-hero-banner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+  }
+  .habit-hero-title {
+    font-size: 16px;
+  }
+  .habit-hero-desc {
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  .habit-hero-stats-row {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+  .hero-stat-pill {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .habit-hero-actions,
+  .parttime-quick-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .habit-hero-actions .btn,
+  .parttime-quick-actions .btn {
+    width: 100%;
+    padding: 11px 14px;
+    font-size: 13px;
+  }
+
+  .parttime-hero-banner {
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+  .coach-hero-banner {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  .coach-score-card {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+  }
+  .coach-score-num {
+    font-size: 36px;
+  }
+  .section-title {
+    font-size: 17px;
+  }
+  .section-sub {
+    font-size: 12.5px;
+  }
+
+  /* --- TASKS VIEW --- */
   .view-control-bar {
     flex-direction: column;
     align-items: stretch;
+    padding: 10px 12px;
+    gap: 8px;
+    margin-bottom: 12px;
+    border-radius: var(--radius-md);
+  }
+  .filter-pills {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    scrollbar-width: none;
+  }
+  .filter-pills::-webkit-scrollbar {
+    display: none;
+  }
+  .filter-pill {
+    flex-shrink: 0;
+    padding: 7px 14px;
+    font-size: 12px;
   }
   .control-bar-left, .control-bar-right {
     width: 100%;
-    justify-content: space-between;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
+  .search-input-box {
+    width: 100%;
+  }
+  .search-input-box input {
+    width: 100%;
+  }
+  .task-item-card {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+  .task-title {
+    font-size: 14px;
+  }
+  .task-desc {
+    font-size: 12px;
+  }
+  .task-meta-row {
+    gap: 6px;
+  }
+
+  /* --- EXPENSE VIEW --- */
+  .expense-item {
+    padding: 12px 14px;
+  }
+
+  /* --- MODALS: mobile-optimized bottom sheets --- */
+  .modal-backdrop {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  .modal-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92vh;
+    padding: 18px 16px;
+    margin: 0 !important;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
+    animation: modal-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+  @keyframes modal-slide-up {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .modal-header {
+    padding-bottom: 14px;
+    margin-bottom: 14px;
+  }
+  .modal-title {
+    font-size: 17px;
+  }
+  .form-row-2, .form-row-3 {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .form-group {
+    margin-bottom: 2px;
+  }
+  .form-label {
+    font-size: 12.5px;
+    margin-bottom: 4px;
+  }
+
+  /* --- TIMELINE (Life Coach) --- */
   .timeline-slot {
     flex-direction: column;
     gap: 4px;
+    padding: 10px 12px;
   }
   .slot-time {
     width: auto;
+    font-size: 11px;
+  }
+  .slot-info strong {
+    font-size: 13px;
+  }
+  .slot-info span {
+    font-size: 11.5px;
+  }
+
+  /* --- ENGLISH DRILLS --- */
+  .drill-item {
+    padding: 12px;
+  }
+  .drill-item h5 {
+    font-size: 14px;
+  }
+  .drill-item p {
+    font-size: 12px;
+  }
+
+  /* --- STRATEGY STEPS --- */
+  .strategy-step {
+    padding: 12px;
+  }
+
+  /* --- TABLE (Part-Time Ledger) --- */
+  .data-table th, .data-table td {
+    padding: 8px 6px;
+    font-size: 11px;
+  }
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* --- SETTINGS PAGE --- */
+  .backup-actions-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* --- WASTE ANALYSIS --- */
+  .waste-analysis-panel,
+  .habit-checklist-panel {
+    margin-bottom: 0;
+  }
+  .waste-note {
+    font-size: 12px;
+    padding: 0 14px;
+    margin-bottom: 12px;
+  }
+  .recovery-rule-box {
+    margin: 14px;
+    padding: 12px;
+  }
+
+  /* --- PROGRESS BARS --- */
+  .progress-bar-container {
+    height: 4px;
+    border-radius: 2px;
+  }
+
+  /* --- LEDGER / HISTORY --- */
+  .ledger-container {
+    margin-top: 14px !important;
+  }
+  .ledger-header-meta {
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+  }
+
+  /* --- KANBAN BOARD on mobile --- */
+  .kanban-column {
+    min-height: auto;
+  }
+
+  /* --- MISC mobile polish --- */
+  .kbd-badge {
+    display: none;
+  }
+  .caption {
+    font-size: 11px;
+  }
+  .count-pill {
+    font-size: 10px;
+    padding: 2px 6px;
   }
 }
+
+/* Extra-small phones (< 360px width) */
+@media (max-width: 360px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .kpi-value {
+    font-size: 18px;
+  }
+  .bnav-btn span {
+    font-size: 8px;
+  }
+  .hero-title {
+    font-size: 15px;
+  }
+  .hero-actions .btn {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+}
+
 

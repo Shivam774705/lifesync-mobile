@@ -61,8 +61,11 @@ class StorageManager {
     if (!localStorage.getItem(STORAGE_KEYS.SETTINGS)) {
       this.saveSettings(DEFAULT_SETTINGS);
     }
-    if (!localStorage.getItem(STORAGE_KEYS.TASKS) && !localStorage.getItem(STORAGE_KEYS.EXPENSES)) {
-      this.loadSampleData();
+    if (!localStorage.getItem(STORAGE_KEYS.TASKS)) {
+      this.saveTasks([]);
+    }
+    if (!localStorage.getItem(STORAGE_KEYS.EXPENSES)) {
+      this.saveExpenses([]);
     }
   }
 
@@ -392,7 +395,7 @@ class StorageManager {
     try {
       const data = localStorage.getItem('lifesync_habits_v1');
       if (data) return JSON.parse(data);
-      // Default initial habits
+      // Default initial habits (Clean starting slate for user)
       const initialHabits = [
         {
           id: 'habit_smoking',
@@ -400,8 +403,8 @@ class StorageManager {
           category: 'health',
           costPerDay: 150,
           targetDays: 30,
-          streakDays: 3,
-          lastLoggedDate: new Date().toISOString().split('T')[0],
+          streakDays: 0,
+          lastLoggedDate: '',
           history: {}
         },
         {
@@ -409,8 +412,8 @@ class StorageManager {
           name: 'English Speaking & Vocabulary Practice (25 mins)',
           category: 'skill',
           targetDays: 30,
-          streakDays: 5,
-          lastLoggedDate: new Date().toISOString().split('T')[0],
+          streakDays: 0,
+          lastLoggedDate: '',
           history: {}
         },
         {
@@ -418,8 +421,8 @@ class StorageManager {
           name: 'Dedicated Study & Upskilling Focus (1 hour)',
           category: 'study',
           targetDays: 30,
-          streakDays: 4,
-          lastLoggedDate: new Date().toISOString().split('T')[0],
+          streakDays: 0,
+          lastLoggedDate: '',
           history: {}
         },
         {
@@ -427,8 +430,8 @@ class StorageManager {
           name: 'Zero Unnecessary Spend Day',
           category: 'finance',
           targetDays: 30,
-          streakDays: 2,
-          lastLoggedDate: new Date().toISOString().split('T')[0],
+          streakDays: 0,
+          lastLoggedDate: '',
           history: {}
         }
       ];
