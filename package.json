@@ -1,0 +1,18 @@
+{
+  "name": "lifesync-mobile",
+  "version": "1.0.0",
+  "description": "LifeSync — Mobile Life Command Center (Job, Study, Part-Time, Habits & Finance)",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "keywords": [
+    "mobile",
+    "android",
+    "task-tracker",
+    "expense-monitoring",
+    "habits"
+  ],
+  "author": "LifeSync",
+  "license": "MIT"
+}

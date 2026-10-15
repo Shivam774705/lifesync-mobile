@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f17">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>LifeSync — Mobile Life Command Center</title>
+  <meta name="description" content="Personal life command center: Job, study, part-time earnings & fuel, quit smoking, unnecessary spend defense, and English communication drills.">
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js for interactive analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Web App Manifest for Mobile PWA & APK -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/views.css">
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error', err));
+      });
+    }
+  </script>
+</head>
+<body>
+  <!-- Canvas for celebration confetti -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo-glow">
+          <div class="brand-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+        </div>
+        <div class="brand-info">
+          <span class="brand-name">LifeSync</span>
+          <span class="brand-tagline">Personal Hub</span>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="sidebar-quick-actions">
+        <button class="btn btn-primary btn-glow w-100" id="btn-quick-add-task">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>New Task</span>
+          <span class="kbd-badge">T</span>
+        </button>
+        <button class="btn btn-emerald btn-glow w-100" id="btn-quick-add-expense">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          <span>Log Expense</span>
+          <span class="kbd-badge">E</span>
+        </button>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">COMMAND CENTER</div>
+        <ul class="nav-menu">
+          <li>
+            <button class="nav-link active" data-view="dashboard" id="nav-dashboard">
+              <span class="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
+              </span>
+              <span class="nav-label">Dashboard</span>
+            </button>
+          </li>
+          <li>
+            <button class="nav-link" data-view="tasks" id="nav-tasks">
+              <span class="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+              </span>
+              <span class="nav-label">Task Tracker</span>
+              <span class="nav-badge" id="badge-pending-tasks">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="nav-link" data-view="expenses" id="nav-expenses">
+              <span class="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </span>
+              <span class="nav-label">Expense Monitor</span>
+              <span class="nav-badge badge-spend" id="badge-month-spend">₹0</span>
+            </button>
+          </li>
+          <li>
+            <button class="nav-link" data-view="habits" id="nav-habits">
+              <span class="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+              </span>
+              <span class="nav-label">Habits & Quit Smoking</span>
+              <span class="nav-badge badge-warning" id="badge-waste-saved">Save ₹</span>
+            </button>
+          </li>
+          <li>
+            <button class="nav-link" data-view="parttime" id="nav-parttime">
+              <span class="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              </span>
+              <span class="nav-label">Part-Time & Daily Earning</span>
+              <span class="nav-badge badge-emerald" id="badge-parttime-net">Daily Net</span>
+            </button>
+          </li>
+          <li>
+            <button class="nav-link" data-view="lifecoach" id="nav-lifecoach">
+              <span class="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+              </span>
+              <span class="nav-label">Life Mastery & English</span>
+              <span class="nav-badge badge-info">Level Up</span>
+            </button>
+          </li>
+          <li>
+            <button class="nav-link" data-view="analytics" id="nav-analytics">
+              <span class="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+              </span>
+              <span class="nav-label">Analytics & Trends</span>
+            </button>
+          </li>
+          <li>
+            <button class="nav-link" data-view="settings" id="nav-settings">
+              <span class="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              </span>
+              <span class="nav-label">Settings & Backup</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Sidebar Mini Budget Widget -->
+      <div class="sidebar-budget-card">
+        <div class="budget-card-header">
+          <span class="caption">Monthly Budget</span>
+          <span class="budget-pct" id="side-budget-pct">0%</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="side-budget-bar" style="width: 0%;"></div>
+        </div>
+        <div class="budget-card-footer">
+          <span class="spent" id="side-budget-spent">₹0</span>
+          <span class="limit" id="side-budget-total">/ ₹0</span>
+        </div>
+      </div>
+
+      <!-- User & Privacy indicator -->
+      <div class="sidebar-user">
+        <div class="user-avatar">
+          <span>ME</span>
+        </div>
+        <div class="user-meta">
+          <span class="user-name">Personal Workspace</span>
+          <span class="user-status"><span class="status-dot"></span> Private • Offline First</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Shell -->
+    <main class="app-main">
+      <!-- Top Navigation Bar -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="btn btn-icon sidebar-toggle" id="sidebar-toggle" aria-label="Toggle Navigation">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <div class="greeting-box">
+            <h1 class="page-title" id="page-title">Dashboard</h1>
+            <p class="greeting-sub" id="live-datetime">Welcome back • Here is your life overview</p>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Install App / Download APK Button -->
+          <button class="btn btn-emerald btn-sm" id="btn-install-apk-prompt" title="Download or Install on Mobile" style="display: inline-flex; gap: 6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>📱 Install App / APK</span>
+          </button>
+
+          <!-- Currency selector dropdown -->
+          <div class="header-pill currency-pill" title="Click to change currency">
+            <span class="pill-label">Currency</span>
+            <select id="currency-select" class="currency-dropdown" aria-label="Select Currency">
+              <option value="INR" selected>₹ INR</option>
+              <option value="USD">$ USD</option>
+              <option value="EUR">€ EUR</option>
+              <option value="GBP">£ GBP</option>
+              <option value="CAD">C$ CAD</option>
+              <option value="AUD">A$ AUD</option>
+              <option value="JPY">¥ JPY</option>
+            </select>
+          </div>
+
+          <!-- Audio Sound Effects Toggle -->
+          <button class="btn btn-icon" id="btn-sound-toggle" title="Toggle Sound Feedback" aria-label="Toggle Sound">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="sound-icon">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+          </button>
+
+          <!-- Theme Toggle (Dark / Light) -->
+          <button class="btn btn-icon" id="btn-theme-toggle" title="Toggle Dark/Light Mode" aria-label="Toggle Theme">
+            <svg class="theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            <svg class="theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- View Containers -->
+      <div class="content-scrollable">
+
+        <!-- ========================================== -->
+        <!-- VIEW 1: DASHBOARD (UNIFIED COMMAND CENTER) -->
+        <!-- ========================================== -->
+        <section class="view-panel active" id="view-dashboard">
+          <!-- Hero Banner / Life Summary -->
+          <div class="hero-summary-card">
+            <div class="hero-glow-bg"></div>
+            <div class="hero-content">
+              <div class="hero-text-col">
+                <div class="hero-badge">
+                  <span class="badge-dot"></span>
+                  <span id="hero-date-str">Today's Focus</span>
+                </div>
+                <h2 class="hero-title" id="hero-headline">Stay productive and financially mindful.</h2>
+                <p class="hero-sub" id="hero-subline">You have <strong id="hero-pending-count">0 tasks</strong> scheduled for today and <strong id="hero-budget-status">₹0</strong> remaining in your monthly budget.</p>
+              </div>
+              <div class="hero-actions">
+                <button class="btn btn-primary" onclick="window.app.switchView('tasks'); window.app.openNewTaskModal();">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span>Add Task</span>
+                </button>
+                <button class="btn btn-glass" onclick="window.app.switchView('expenses'); window.app.openNewExpenseModal();">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                  <span>Log Expense</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI Metrics Row -->
+          <div class="metrics-grid">
+            <!-- Metric 1: Tasks Today -->
+            <div class="kpi-card card-glow-indigo">
+              <div class="kpi-header">
+                <span class="kpi-title">Today's Tasks</span>
+                <div class="kpi-icon icon-indigo">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                </div>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-value" id="kpi-today-tasks">0 / 0</div>
+                <div class="kpi-subtext" id="kpi-today-tasks-sub">0 completed</div>
+              </div>
+              <div class="kpi-footer-progress">
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill progress-indigo" id="kpi-tasks-bar" style="width: 0%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Metric 2: Month Expenses -->
+            <div class="kpi-card card-glow-rose">
+              <div class="kpi-header">
+                <span class="kpi-title">Spent This Month</span>
+                <div class="kpi-icon icon-rose">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-value text-rose" id="kpi-month-expenses">₹0</div>
+                <div class="kpi-subtext" id="kpi-budget-remaining">Remaining: ₹0</div>
+              </div>
+              <div class="kpi-footer-progress">
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill progress-rose" id="kpi-expenses-bar" style="width: 0%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Metric 3: Month Income & Savings -->
+            <div class="kpi-card card-glow-emerald">
+              <div class="kpi-header">
+                <span class="kpi-title">Income / Inflow</span>
+                <div class="kpi-icon icon-emerald">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                </div>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-value text-emerald" id="kpi-month-income">₹0</div>
+                <div class="kpi-subtext" id="kpi-net-savings">Net Savings: ₹0</div>
+              </div>
+              <div class="kpi-footer-progress">
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill progress-emerald" id="kpi-savings-bar" style="width: 0%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Metric 4: Productivity Streak -->
+            <div class="kpi-card card-glow-amber">
+              <div class="kpi-header">
+                <span class="kpi-title">Productivity Streak</span>
+                <div class="kpi-icon icon-amber">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </div>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-value text-amber" id="kpi-streak-val">🔥 1 Day</div>
+                <div class="kpi-subtext" id="kpi-streak-sub">Keep the momentum going!</div>
+              </div>
+              <div class="kpi-footer-progress">
+                <span class="kpi-badge-pill" id="kpi-overall-status">On Track</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Dashboard Split Grid -->
+          <div class="dash-split-grid">
+            <!-- Left: Top Priority & Due Today Tasks -->
+            <div class="glass-panel dash-panel-tasks">
+              <div class="panel-header">
+                <div class="panel-title-group">
+                  <h3 class="panel-title">Tasks Due Today & Urgent</h3>
+                  <span class="count-pill" id="dash-urgent-count">0</span>
+                </div>
+                <button class="btn btn-text btn-sm" onclick="window.app.switchView('tasks');">View All &rarr;</button>
+              </div>
+
+              <!-- Quick Add Task Bar -->
+              <form class="inline-quick-add" id="form-dash-quick-task">
+                <input type="text" class="input-glass" id="dash-quick-task-title" placeholder="+ Add a task for today (Press Enter)..." autocomplete="off" required>
+                <button type="submit" class="btn btn-sm btn-primary">Add</button>
+              </form>
+
+              <!-- Today's Task List -->
+              <div class="dash-task-list" id="dash-task-container">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+
+            <!-- Right: Spending Snapshot & Recent Ledger -->
+            <div class="glass-panel dash-panel-finance">
+              <div class="panel-header">
+                <div class="panel-title-group">
+                  <h3 class="panel-title">Expense Snapshot</h3>
+                  <span class="caption" id="dash-month-caption">This Month</span>
+                </div>
+                <button class="btn btn-text btn-sm" onclick="window.app.switchView('expenses');">Full Ledger &rarr;</button>
+              </div>
+
+              <!-- Mini Category Progress Cards -->
+              <div class="dash-category-spend" id="dash-category-spend">
+                <!-- Top categories spending preview -->
+              </div>
+
+              <div class="recent-trans-section">
+                <div class="section-subtitle">Recent Transactions</div>
+                <div class="dash-trans-list" id="dash-trans-container">
+                  <!-- Rendered dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 2: TASK TRACKER HUB                   -->
+        <!-- ========================================== -->
+        <section class="view-panel" id="view-tasks">
+          <!-- Tasks Control Bar -->
+          <div class="view-control-bar glass-panel">
+            <div class="control-bar-left">
+              <!-- Filter Tabs -->
+              <div class="filter-pills" id="tasks-filter-pills">
+                <button class="filter-pill active" data-task-filter="all">All Tasks</button>
+                <button class="filter-pill" data-task-filter="today">Today</button>
+                <button class="filter-pill" data-task-filter="upcoming">Upcoming</button>
+                <button class="filter-pill" data-task-filter="urgent">Urgent & High</button>
+                <button class="filter-pill" data-task-filter="completed">Completed</button>
+              </div>
+
+              <!-- Category filter dropdown -->
+              <div class="select-wrapper">
+                <select id="tasks-category-filter" class="select-glass" aria-label="Filter tasks by category">
+                  <option value="all">All Categories</option>
+                  <option value="Work">💼 Primary Job / Work</option>
+                  <option value="Study">📚 Study & Upskilling</option>
+                  <option value="Part-Time">⚡ Part-Time Job / Gigs</option>
+                  <option value="English">🗣️ English Communication</option>
+                  <option value="Habits">🚭 Habits & Quit Smoking</option>
+                  <option value="Personal">🏡 Personal & Life</option>
+                  <option value="Health">🏃 Health & Fitness</option>
+                  <option value="Finance">💰 Finance & Money</option>
+                  <option value="Errands">🛒 Errands</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="control-bar-right">
+              <!-- Search box -->
+              <div class="search-input-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="tasks-search-input" placeholder="Search tasks..." autocomplete="off">
+              </div>
+
+              <!-- View Switcher (List vs Kanban) -->
+              <div class="view-mode-toggle" id="tasks-view-toggle">
+                <button class="mode-btn active" data-mode="list" title="List View">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                </button>
+                <button class="mode-btn" data-mode="kanban" title="Kanban Board View">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1"></rect><rect x="10" y="3" width="5" height="11" rx="1"></rect><rect x="17" y="3" width="5" height="15" rx="1"></rect></svg>
+                </button>
+              </div>
+
+              <!-- Add Task Button -->
+              <button class="btn btn-primary" id="btn-add-task-modal">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Add Task</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tasks Content Area: LIST VIEW -->
+          <div class="tasks-list-container" id="tasks-list-view">
+            <!-- Dynamic task items -->
+          </div>
+
+          <!-- Tasks Content Area: KANBAN VIEW -->
+          <div class="tasks-kanban-board hidden" id="tasks-kanban-view">
+            <!-- Column 1: To Do -->
+            <div class="kanban-column" data-status="todo" id="kanban-col-todo">
+              <div class="kanban-col-header">
+                <div class="col-title-group">
+                  <span class="col-indicator col-todo"></span>
+                  <span class="col-title">To Do</span>
+                  <span class="col-count" id="kanban-count-todo">0</span>
+                </div>
+                <button class="btn btn-icon btn-sm" onclick="window.app.openNewTaskModalWithStatus('todo')">+</button>
+              </div>
+              <div class="kanban-cards-wrapper" id="kanban-cards-todo"></div>
+            </div>
+
+            <!-- Column 2: In Progress -->
+            <div class="kanban-column" data-status="in-progress" id="kanban-col-in-progress">
+              <div class="kanban-col-header">
+                <div class="col-title-group">
+                  <span class="col-indicator col-in-progress"></span>
+                  <span class="col-title">In Progress</span>
+                  <span class="col-count" id="kanban-count-in-progress">0</span>
+                </div>
+                <button class="btn btn-icon btn-sm" onclick="window.app.openNewTaskModalWithStatus('in-progress')">+</button>
+              </div>
+              <div class="kanban-cards-wrapper" id="kanban-cards-in-progress"></div>
+            </div>
+
+            <!-- Column 3: Completed -->
+            <div class="kanban-column" data-status="completed" id="kanban-col-completed">
+              <div class="kanban-col-header">
+                <div class="col-title-group">
+                  <span class="col-indicator col-completed"></span>
+                  <span class="col-title">Completed</span>
+                  <span class="col-count" id="kanban-count-completed">0</span>
+                </div>
+                <button class="btn btn-icon btn-sm" onclick="window.app.openNewTaskModalWithStatus('completed')">+</button>
+              </div>
+              <div class="kanban-cards-wrapper" id="kanban-cards-completed"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 3: EXPENSE MONITOR & BUDGET HUB       -->
+        <!-- ========================================== -->
+        <section class="view-panel" id="view-expenses">
+          <!-- Budget Health Banner -->
+          <div class="glass-panel budget-dashboard-banner">
+            <div class="budget-banner-header">
+              <div class="budget-title-info">
+                <span class="badge-sub">MONTHLY BUDGET STATUS</span>
+                <h3 class="budget-banner-heading" id="budget-heading-status">You have 52% of budget remaining</h3>
+              </div>
+              <div class="budget-banner-actions">
+                <button class="btn btn-glass btn-sm" id="btn-edit-budget-limit">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                  <span>Edit Budget</span>
+                </button>
+                <button class="btn btn-emerald btn-sm" id="btn-add-income-top">
+                  + Add Income
+                </button>
+                <button class="btn btn-rose btn-sm" id="btn-add-expense-top">
+                  + Log Expense
+                </button>
+              </div>
+            </div>
+
+            <!-- Big Interactive Progress Bar -->
+            <div class="budget-big-progress">
+              <div class="progress-bar-container progress-bar-lg">
+                <div class="progress-bar-fill progress-dynamic" id="main-budget-bar" style="width: 0%;"></div>
+              </div>
+              <div class="budget-stat-pills">
+                <div class="budget-stat-item">
+                  <span class="stat-lbl">Monthly Budget:</span>
+                  <span class="stat-val" id="banner-budget-total">₹30,000</span>
+                </div>
+                <div class="budget-stat-item">
+                  <span class="stat-lbl">Total Spent:</span>
+                  <span class="stat-val text-rose" id="banner-budget-spent">₹0</span>
+                </div>
+                <div class="budget-stat-item">
+                  <span class="stat-lbl">Remaining:</span>
+                  <span class="stat-val text-emerald" id="banner-budget-remain">₹30,000</span>
+                </div>
+                <div class="budget-stat-item">
+                  <span class="stat-lbl">Estimated Month End:</span>
+                  <span class="stat-val" id="banner-projected-spend">₹0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expenses Filter & Controls Bar -->
+          <div class="view-control-bar glass-panel">
+            <div class="control-bar-left">
+              <!-- Type Pills: All / Expenses / Income -->
+              <div class="filter-pills" id="expenses-type-pills">
+                <button class="filter-pill active" data-exp-type="all">All</button>
+                <button class="filter-pill" data-exp-type="expense">Expenses Only</button>
+                <button class="filter-pill" data-exp-type="income">Income Only</button>
+              </div>
+
+              <!-- Category filter -->
+              <div class="select-wrapper">
+                <select id="expense-category-filter" class="select-glass" aria-label="Filter transactions by category">
+                  <option value="all">All Categories</option>
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+
+              <!-- Payment Method filter -->
+              <div class="select-wrapper">
+                <select id="expense-payment-filter" class="select-glass" aria-label="Filter transactions by payment method">
+                  <option value="all">All Payment Methods</option>
+                  <option value="UPI">UPI / GPay / PhonePe</option>
+                  <option value="Credit Card">Credit Card</option>
+                  <option value="Debit Card">Debit Card</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Net Banking">Net Banking</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="control-bar-right">
+              <!-- Search box -->
+              <div class="search-input-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="expense-search-input" placeholder="Search merchant, notes..." autocomplete="off">
+              </div>
+
+              <button class="btn btn-primary" id="btn-add-expense-modal">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Add Record</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Transaction Ledger Table -->
+          <div class="glass-panel ledger-container">
+            <div class="ledger-header-meta">
+              <div class="ledger-title-group">
+                <span class="ledger-title">Transaction Ledger</span>
+                <span class="count-pill" id="ledger-count">0 records</span>
+              </div>
+              <div class="ledger-summary-chip">
+                <span>Total Filtered: </span>
+                <strong id="ledger-filtered-sum">₹0</strong>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="data-table" id="expenses-table">
+                <thead>
+                  <tr>
+                    <th>Date & Time</th>
+                    <th>Category</th>
+                    <th>Description / Merchant</th>
+                    <th>Payment Method</th>
+                    <th class="text-right">Amount</th>
+                    <th class="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="expenses-tbody">
+                  <!-- Transactions dynamically rendered -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 4: ANALYTICS & INSIGHTS               -->
+        <!-- ========================================== -->
+        <section class="view-panel" id="view-analytics">
+          <!-- Time Range Selector -->
+          <div class="analytics-header glass-panel">
+            <div class="analytics-title-col">
+              <h2 class="section-title">Financial & Productivity Intelligence</h2>
+              <p class="section-sub">Real-time breakdowns, behavioral insights, and spending velocity</p>
+            </div>
+            <div class="analytics-time-picker">
+              <div class="filter-pills" id="analytics-range-pills">
+                <button class="filter-pill active" data-range="this-month">This Month</button>
+                <button class="filter-pill" data-range="last-30">Last 30 Days</button>
+                <button class="filter-pill" data-range="all-time">All Time</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Insights Stat Cards Grid -->
+          <div class="analytics-stats-grid">
+            <div class="analytics-stat-card glass-panel">
+              <div class="stat-card-title">Top Expense Category</div>
+              <div class="stat-card-val text-rose" id="stat-top-cat">-</div>
+              <div class="stat-card-sub" id="stat-top-cat-amount">₹0 (0% of total)</div>
+            </div>
+            <div class="analytics-stat-card glass-panel">
+              <div class="stat-card-title">Daily Spending Average</div>
+              <div class="stat-card-val text-amber" id="stat-daily-avg">₹0</div>
+              <div class="stat-card-sub" id="stat-daily-avg-sub">Across active days</div>
+            </div>
+            <div class="analytics-stat-card glass-panel">
+              <div class="stat-card-title">Savings Rate</div>
+              <div class="stat-card-val text-emerald" id="stat-savings-rate">0%</div>
+              <div class="stat-card-sub" id="stat-savings-rate-sub">Savings / Total Inflow</div>
+            </div>
+            <div class="analytics-stat-card glass-panel">
+              <div class="stat-card-title">Task Completion Velocity</div>
+              <div class="stat-card-val text-indigo" id="stat-task-velocity">0%</div>
+              <div class="stat-card-sub" id="stat-task-velocity-sub">Completed vs created</div>
+            </div>
+          </div>
+
+          <!-- Charts Row 1: Donut Category Breakdown + Weekly Spending Bar Chart -->
+          <div class="charts-grid-2col">
+            <div class="chart-container-card glass-panel">
+              <div class="chart-header">
+                <h3 class="chart-title">Expense Breakdown by Category</h3>
+                <span class="caption">Where your money goes</span>
+              </div>
+              <div class="chart-wrapper chart-donut-wrapper">
+                <canvas id="chart-category-doughnut"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-container-card glass-panel">
+              <div class="chart-header">
+                <h3 class="chart-title">Daily Spending Velocity (Last 14 Days)</h3>
+                <span class="caption">Day-by-day expense timeline</span>
+              </div>
+              <div class="chart-wrapper">
+                <canvas id="chart-daily-spending"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 2: Cash Flow (Income vs Expense) + Task Priority Distribution -->
+          <div class="charts-grid-2col">
+            <div class="chart-container-card glass-panel">
+              <div class="chart-header">
+                <h3 class="chart-title">Cash Inflow vs Outflow</h3>
+                <span class="caption">Net cash flow comparison</span>
+              </div>
+              <div class="chart-wrapper">
+                <canvas id="chart-cashflow-comparison"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-container-card glass-panel">
+              <div class="chart-header">
+                <h3 class="chart-title">Tasks Distribution by Category</h3>
+                <span class="caption">Focus balance</span>
+              </div>
+              <div class="chart-wrapper">
+                <canvas id="chart-tasks-distribution"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 5: SETTINGS, BACKUP & PREFERENCES     -->
+        <!-- ========================================== -->
+        <section class="view-panel" id="view-settings">
+          <div class="settings-container">
+            <div class="settings-section glass-panel">
+              <h3 class="settings-sec-title">Personal Preferences</h3>
+              <p class="settings-sec-sub">Tailor LifeSync to your daily workflow</p>
+              
+              <div class="settings-grid">
+                <div class="settings-item">
+                  <div class="item-info">
+                    <label class="item-label">Default Currency</label>
+                    <span class="item-desc">Sets the symbol and calculation formatting</span>
+                  </div>
+                  <div class="item-control">
+                    <select id="settings-currency-select" class="select-glass">
+                      <option value="INR">₹ INR - Indian Rupee</option>
+                      <option value="USD">$ USD - US Dollar</option>
+                      <option value="EUR">€ EUR - Euro</option>
+                      <option value="GBP">£ GBP - British Pound</option>
+                      <option value="CAD">C$ CAD - Canadian Dollar</option>
+                      <option value="AUD">A$ AUD - Australian Dollar</option>
+                      <option value="JPY">¥ JPY - Japanese Yen</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="settings-item">
+                  <div class="item-info">
+                    <label class="item-label" for="settings-monthly-budget">Monthly Spending Budget</label>
+                    <span class="item-desc">Your target spending ceiling per calendar month</span>
+                  </div>
+                  <div class="item-control">
+                    <div class="input-with-symbol">
+                      <span class="currency-symbol-tag" id="settings-budget-curr-tag">₹</span>
+                      <input type="number" id="settings-monthly-budget" class="input-glass" min="0" step="100" value="30000">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="settings-item">
+                  <div class="item-info">
+                    <label class="item-label" for="settings-sound-check">Sound & Feedback Effects</label>
+                    <span class="item-desc">Play satisfying audio cues when completing tasks or adding records</span>
+                  </div>
+                  <div class="item-control">
+                    <label class="switch">
+                      <input type="checkbox" id="settings-sound-check" checked>
+                      <span class="slider round"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Data Privacy & Export Section -->
+            <div class="settings-section glass-panel">
+              <h3 class="settings-sec-title">Backup & Data Portability</h3>
+              <p class="settings-sec-sub">Your data is stored 100% locally in your browser. No servers, complete privacy.</p>
+              
+              <div class="backup-actions-grid">
+                <!-- Action 1: JSON Full Backup -->
+                <div class="backup-card">
+                  <div class="backup-icon icon-indigo">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  </div>
+                  <div class="backup-card-body">
+                    <h4>Export Backup (JSON)</h4>
+                    <p>Download your complete database of tasks, expenses, and settings for safekeeping.</p>
+                    <button class="btn btn-glass btn-sm" id="btn-export-json">Download .json Backup</button>
+                  </div>
+                </div>
+
+                <!-- Action 2: JSON Restore -->
+                <div class="backup-card">
+                  <div class="backup-icon icon-emerald">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  </div>
+                  <div class="backup-card-body">
+                    <h4>Restore from Backup</h4>
+                    <p>Load your saved LifeSync JSON file to restore your workspace.</p>
+                    <input type="file" id="file-import-json" accept=".json" class="hidden">
+                    <button class="btn btn-glass btn-sm" onclick="document.getElementById('file-import-json').click();">Select .json File</button>
+                  </div>
+                </div>
+
+                <!-- Action 3: CSV Expenses Export -->
+                <div class="backup-card">
+                  <div class="backup-icon icon-rose">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                  </div>
+                  <div class="backup-card-body">
+                    <h4>Export Expenses (CSV)</h4>
+                    <p>Open your transactions ledger seamlessly in Microsoft Excel, Google Sheets, or Apple Numbers.</p>
+                    <button class="btn btn-glass btn-sm" id="btn-export-expenses-csv">Download Expenses .csv</button>
+                  </div>
+                </div>
+
+                <!-- Action 4: CSV Tasks Export -->
+                <div class="backup-card">
+                  <div class="backup-icon icon-amber">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                  </div>
+                  <div class="backup-card-body">
+                    <h4>Export Tasks (CSV)</h4>
+                    <p>Export all tasks with priorities, categories, and due dates into a spreadsheet.</p>
+                    <button class="btn btn-glass btn-sm" id="btn-export-tasks-csv">Download Tasks .csv</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Danger & Demo Area -->
+            <div class="settings-section glass-panel border-danger">
+              <h3 class="settings-sec-title">Workspace Management</h3>
+              <p class="settings-sec-sub">Sample data generator and workspace reset controls</p>
+              
+              <div class="workspace-buttons-row">
+                <button class="btn btn-glass" id="btn-load-sample-data">
+                  <span>✨ Populate Realistic Demo Data</span>
+                </button>
+                <button class="btn btn-danger-ghost" id="btn-reset-all-data">
+                  <span>🗑️ Reset All Data</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 6: HABITS & QUIT SMOKING / STOP WASTE -->
+        <!-- ========================================== -->
+        <section class="view-panel" id="view-habits">
+          <!-- Quit Smoking & Anti-Waste Hero Banner -->
+          <div class="glass-panel habit-hero-banner">
+            <div class="habit-banner-glow"></div>
+            <div class="habit-hero-content">
+              <div class="habit-badge-tag">
+                <span class="badge-flame">🔥</span>
+                <span>Quit Smoking & Eliminate Money Waste Tracker</span>
+              </div>
+              <h2 class="habit-hero-title" id="smoke-streak-headline">You have been smoke-free for 3 days!</h2>
+              <p class="habit-hero-desc" id="smoke-saved-desc">By resisting cigarettes and impulsive waste, you have saved approximately <strong class="text-emerald" id="smoke-saved-amount">₹450</strong> and recovered <strong class="text-indigo" id="smoke-time-saved">1.5 hours</strong> of your life.</p>
+              
+              <div class="habit-hero-stats-row">
+                <div class="hero-stat-pill">
+                  <span class="pill-lbl">Current Smoke-Free Streak</span>
+                  <span class="pill-val text-amber" id="smoke-streak-days">3 Days</span>
+                </div>
+                <div class="hero-stat-pill">
+                  <span class="pill-lbl">Projected 1-Year Money Saved</span>
+                  <span class="pill-val text-emerald" id="smoke-yearly-projection">₹54,750</span>
+                </div>
+                <div class="hero-stat-pill">
+                  <span class="pill-lbl">Unnecessary Spends Alert</span>
+                  <span class="pill-val text-rose" id="waste-spends-month">₹570</span>
+                </div>
+              </div>
+            </div>
+            <div class="habit-hero-actions">
+              <button class="btn btn-emerald btn-glow" id="btn-checkin-smoke-free">
+                <span>🛡️ Log Smoke-Free Today</span>
+              </button>
+              <button class="btn btn-rose btn-sm" onclick="window.app.openQuickWasteModal()">
+                <span>⚠️ Log Impulse Waste</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Habit Checklist & Waste Killer Grid -->
+          <div class="charts-grid-2col">
+            <!-- Daily Habit Streaks Checklist -->
+            <div class="glass-panel habit-checklist-panel">
+              <div class="panel-header">
+                <div class="panel-title-group">
+                  <h3 class="panel-title">Daily Discipline & Habits Checklist</h3>
+                  <span class="caption">Tap circle to log today</span>
+                </div>
+                <button class="btn btn-text btn-sm" id="btn-add-habit-modal">+ New Habit</button>
+              </div>
+              <div class="habit-list-container" id="habit-cards-container">
+                <!-- Dynamically rendered habits -->
+              </div>
+            </div>
+
+            <!-- Unnecessary Spends & Waste Analysis -->
+            <div class="glass-panel waste-analysis-panel">
+              <div class="panel-header">
+                <div class="panel-title-group">
+                  <h3 class="panel-title">Money Waste & Impulse Spends Tracker</h3>
+                  <span class="count-pill badge-rose" id="waste-count-pill">2 items</span>
+                </div>
+                <button class="btn btn-text btn-sm" onclick="window.app.switchView('expenses')">Ledger &rarr;</button>
+              </div>
+              <p class="waste-note">Tracks expenses tagged as <em>Smoking / Vices</em> and <em>Unnecessary Spends</em> to show how much wealth you leak each week.</p>
+              
+              <div class="waste-items-list" id="waste-items-container">
+                <!-- Dynamically rendered waste list -->
+              </div>
+
+              <!-- Waste Recovery Rule Box -->
+              <div class="recovery-rule-box">
+                <div class="recovery-icon">💡</div>
+                <div class="recovery-text">
+                  <strong>The 72-Hour Rule & SIP Alternative:</strong>
+                  <span>Every ₹150 not spent on smoking/junk invested into an index fund at 12% annual return compounds to <strong>₹1.2 Lakh in 2 years</strong> and <strong>₹3.5 Lakh in 5 years</strong>!</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 7: PART-TIME JOB & DAILY EARNINGS     -->
+        <!-- ========================================== -->
+        <section class="view-panel" id="view-parttime">
+          <!-- Part-time Overview Banner -->
+          <div class="glass-panel parttime-hero-banner">
+            <div class="parttime-content-col">
+              <span class="badge-sub">SIDE GIG & PART-TIME JOB CALCULATOR</span>
+              <h2 class="section-title">Part-Time Daily Earnings & Fuel/Spend Monitor</h2>
+              <p class="section-sub">Track daily income from delivery/freelance shifts minus vehicle fuel, food & supplies to know your exact <strong>Net Take-Home Pay</strong>.</p>
+            </div>
+            <div class="parttime-quick-actions">
+              <button class="btn btn-emerald btn-glow" id="btn-log-parttime-income">
+                <span>+ Log Part-Time Earning</span>
+              </button>
+              <button class="btn btn-amber" id="btn-log-parttime-expense">
+                <span>- Log Part-Time Fuel/Spend</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Part-Time Key Performance Indicators -->
+          <div class="metrics-grid">
+            <div class="kpi-card card-glow-emerald">
+              <div class="kpi-header">
+                <span class="kpi-title">Part-Time Gross Earning (This Month)</span>
+                <div class="kpi-icon icon-emerald">⚡</div>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-value text-emerald" id="pt-kpi-gross">₹0</div>
+                <div class="kpi-subtext" id="pt-kpi-shifts">0 Shifts Recorded</div>
+              </div>
+            </div>
+
+            <div class="kpi-card card-glow-rose">
+              <div class="kpi-header">
+                <span class="kpi-title">Part-Time Spends (Fuel, Food, Tools)</span>
+                <div class="kpi-icon icon-rose">🛵</div>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-value text-rose" id="pt-kpi-expense">₹0</div>
+                <div class="kpi-subtext" id="pt-kpi-exp-sub">Operating cost</div>
+              </div>
+            </div>
+
+            <div class="kpi-card card-glow-indigo">
+              <div class="kpi-header">
+                <span class="kpi-title">Net Daily / Monthly Take-Home</span>
+                <div class="kpi-icon icon-indigo">💰</div>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-value text-indigo" id="pt-kpi-net">₹0</div>
+                <div class="kpi-subtext" id="pt-kpi-margin">0% Net Margin</div>
+              </div>
+            </div>
+
+            <div class="kpi-card card-glow-amber">
+              <div class="kpi-header">
+                <span class="kpi-title">Average Earning Per Shift</span>
+                <div class="kpi-icon icon-amber">📈</div>
+              </div>
+              <div class="kpi-body">
+                <div class="kpi-value text-amber" id="pt-kpi-avg">₹0</div>
+                <div class="kpi-subtext">Estimated net per day</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Part-Time Ledger & Shifts Timeline -->
+          <div class="glass-panel ledger-container" style="margin-top: 20px;">
+            <div class="ledger-header-meta">
+              <div class="ledger-title-group">
+                <span class="ledger-title">Part-Time Shifts & Transaction History</span>
+                <span class="count-pill" id="pt-history-count">0 records</span>
+              </div>
+              <button class="btn btn-glass btn-sm" id="btn-export-pt-history">Export Shift Logs</button>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="pt-history-table">
+                <thead>
+                  <tr>
+                    <th>Date & Time</th>
+                    <th>Type</th>
+                    <th>Description / Details</th>
+                    <th>Payment</th>
+                    <th class="text-right">Amount</th>
+                    <th class="text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="pt-history-tbody">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- VIEW 8: LIFE MASTERY, ENGLISH & TIME AUDIT -->
+        <!-- ========================================== -->
+        <section class="view-panel" id="view-lifecoach">
+          <div class="coach-hero-banner glass-panel">
+            <div class="coach-header-info">
+              <span class="badge-sub">LIFE & CAREER ACCELERATION SYSTEM</span>
+              <h2 class="section-title">Job, Study, English Communication & Time Optimization</h2>
+              <p class="section-sub">A proven blueprint to balance your day: 8 hours work, 1.5 hours focused study, 2 hours part-time income, and 30 mins English fluency drills.</p>
+            </div>
+            <div class="coach-score-card">
+              <div class="coach-score-num" id="life-mastery-score">82%</div>
+              <div class="coach-score-lbl">Life Optimization Score</div>
+            </div>
+          </div>
+
+          <!-- 4 Pillars Grid -->
+          <div class="pillars-grid">
+            <!-- Pillar 1: Time Management & Best Daily Routine -->
+            <div class="pillar-card glass-panel">
+              <div class="pillar-header">
+                <div class="pillar-icon icon-indigo">⏰</div>
+                <div>
+                  <h4 class="pillar-title">1. Time Management Mastery</h4>
+                  <span class="pillar-sub">Ideal 24-Hour Schedule for Job + Study + Side Gig</span>
+                </div>
+              </div>
+              <div class="schedule-timeline">
+                <div class="timeline-slot">
+                  <span class="slot-time">06:00 - 07:15 AM</span>
+                  <div class="slot-info">
+                    <strong>Morning Energy & Exercise</strong>
+                    <span>Workout, fresh air, healthy breakfast. No phone screens.</span>
+                  </div>
+                </div>
+                <div class="timeline-slot highlight-study">
+                  <span class="slot-time">07:15 - 08:30 AM</span>
+                  <div class="slot-info">
+                    <strong>Study & Upskilling (Peak Brain Focus)</strong>
+                    <span>Core tech, certifications, or course study while mind is 100% fresh.</span>
+                  </div>
+                </div>
+                <div class="timeline-slot highlight-work">
+                  <span class="slot-time">09:30 - 06:00 PM</span>
+                  <div class="slot-info">
+                    <strong>Primary Job Commitment</strong>
+                    <span>Give top performance to excel, get promotions, and raise base salary.</span>
+                  </div>
+                </div>
+                <div class="timeline-slot highlight-parttime">
+                  <span class="slot-time">07:00 - 09:30 PM</span>
+                  <div class="slot-info">
+                    <strong>Part-Time Job / Freelance Gigs</strong>
+                    <span>Daily active earning window to stack emergency savings & extra cash.</span>
+                  </div>
+                </div>
+                <div class="timeline-slot highlight-english">
+                  <span class="slot-time">09:45 - 10:15 PM</span>
+                  <div class="slot-info">
+                    <strong>English Speaking Drill & Habit Review</strong>
+                    <span>Audio shadowing, log daily spends, celebrate zero smoking.</span>
+                  </div>
+                </div>
+                <div class="timeline-slot">
+                  <span class="slot-time">10:30 PM - 06:00 AM</span>
+                  <div class="slot-info">
+                    <strong>7.5 Hours Restorative Sleep</strong>
+                    <span>Essential brain recovery to sustain high performance daily.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pillar 2: English Communication Daily Drills -->
+            <div class="pillar-card glass-panel">
+              <div class="pillar-header">
+                <div class="pillar-icon icon-emerald">🗣️</div>
+                <div>
+                  <h4 class="pillar-title">2. English Fluency Accelerator</h4>
+                  <span class="pillar-sub">Daily 15-minute actionable fluency workouts</span>
+                </div>
+              </div>
+              <div class="english-drills-list">
+                <div class="drill-item">
+                  <div class="drill-tag">Drill 1 • 5 Mins</div>
+                  <h5>The 2-Minute Spontaneous Solo Talk</h5>
+                  <p>Pick a topic: <em>"My career in 3 years"</em>. Speak out loud in English for 2 minutes continuously without pausing or translating from your native language.</p>
+                </div>
+                <div class="drill-item">
+                  <div class="drill-tag">Drill 2 • 5 Mins</div>
+                  <h5>Voice Shadowing Technique</h5>
+                  <p>Listen to a 1-minute clip from Steve Jobs, TedTalks, or English podcasts. Mimic their exact pronunciation, intonation, and rhythm sentence by sentence.</p>
+                </div>
+                <div class="drill-item">
+                  <div class="drill-tag">Drill 3 • 5 Mins</div>
+                  <h5>High-Value Workplace Vocab & Phrases</h5>
+                  <p>Replace basic words with professional English: Instead of <em>"I will tell them"</em> &rarr; <em>"I will loop them in"</em>. Instead of <em>"Let's meet"</em> &rarr; <em>"Let's sync up"</em>.</p>
+                </div>
+              </div>
+              <div class="english-action-box">
+                <button class="btn btn-primary btn-sm w-100" id="btn-log-english-practice">
+                  <span>✅ Mark Today's English Drill Complete</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Pillar 3: How to Increase Earnings & Career Growth -->
+            <div class="pillar-card glass-panel">
+              <div class="pillar-header">
+                <div class="pillar-icon icon-amber">🚀</div>
+                <div>
+                  <h4 class="pillar-title">3. Maximize Your Earnings</h4>
+                  <span class="pillar-sub">Strategic roadmap to multiply your income</span>
+                </div>
+              </div>
+              <div class="strategy-steps">
+                <div class="strategy-step">
+                  <div class="step-badge">Phase 1</div>
+                  <div class="step-body">
+                    <strong>Stabilize Primary Salary & Side Cash</strong>
+                    <span>Deliver consistently at your primary job while using part-time earnings exclusively for building an emergency fund of 3-6 months.</span>
+                  </div>
+                </div>
+                <div class="strategy-step">
+                  <div class="step-badge">Phase 2</div>
+                  <div class="step-body">
+                    <strong>Skill-Based Arbitrage (Upskilling)</strong>
+                    <span>Transition from low-paying manual gigs to digital skills (Tech, Design, QA, Writing, Data) where hourly pay is 3x to 5x higher.</span>
+                  </div>
+                </div>
+                <div class="strategy-step">
+                  <div class="step-badge">Phase 3</div>
+                  <div class="step-body">
+                    <strong>Fluent English & Interview Readiness</strong>
+                    <span>Fluency in English instantly unlocks top 10% international remote jobs and tier-1 company offers with 50-100% salary hikes.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pillar 4: Eliminating Unnecessary Spends & Smoking -->
+            <div class="pillar-card glass-panel">
+              <div class="pillar-header">
+                <div class="pillar-icon icon-rose">🛑</div>
+                <div>
+                  <h4 class="pillar-title">4. Financial Discipline & Habit Defense</h4>
+                  <span class="pillar-sub">Stop bleeding wealth into vices & unnecessary leaks</span>
+                </div>
+              </div>
+              <div class="habit-defense-list">
+                <div class="defense-item">
+                  <span class="defense-check">🚭</span>
+                  <div class="defense-text">
+                    <strong>Eliminate Smoking Trigger Points:</strong>
+                    <span>Cravings last only 3 to 5 minutes. When urge hits, drink cold water, do 15 pushups, or take 10 deep breaths. Never keep loose cash in pocket.</span>
+                  </div>
+                </div>
+                <div class="defense-item">
+                  <span class="defense-check">🛒</span>
+                  <div class="defense-text">
+                    <strong>The 24-Hour Wait Rule for Purchases:</strong>
+                    <span>Never buy anything non-essential on the spot. Wait 24 hours. In 80% of cases, the dopamine impulse fades away.</span>
+                  </div>
+                </div>
+                <div class="defense-item">
+                  <span class="defense-check">📱</span>
+                  <div class="defense-text">
+                    <strong>Auto-Transfer Part-Time Earnings:</strong>
+                    <span>Whenever you receive daily part-time earnings, immediately move 50% into a separate recurring deposit or savings account before you get tempted to spend it.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- MOBILE BOTTOM NAVIGATION DOCK (App Style)  -->
+    <!-- ========================================== -->
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+      <button class="bnav-btn active" data-view="dashboard">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
+        <span>Home</span>
+      </button>
+      <button class="bnav-btn" data-view="tasks">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+        <span>Tasks</span>
+      </button>
+      <button class="bnav-btn" data-view="parttime">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        <span>Part-Time</span>
+      </button>
+      <button class="bnav-btn" data-view="habits">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+        <span>Habits</span>
+      </button>
+      <button class="bnav-btn" data-view="lifecoach">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+        <span>Growth</span>
+      </button>
+      <button class="bnav-btn" data-view="expenses">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        <span>Expenses</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: ADD / EDIT TASK                     -->
+  <!-- ========================================== -->
+  <div class="modal-backdrop" id="modal-task-backdrop">
+    <div class="modal-card glass-panel" id="modal-task">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-task-title">Create New Task</h3>
+        <button class="btn btn-icon btn-sm modal-close" onclick="window.app.closeModals()">&times;</button>
+      </div>
+      <form id="form-task">
+        <input type="hidden" id="task-edit-id" value="">
+        
+        <div class="form-group">
+          <label class="form-label" for="task-input-title">Task Title <span class="required">*</span></label>
+          <input type="text" id="task-input-title" class="input-glass" placeholder="e.g., Review monthly investment portfolio..." required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="task-input-desc">Notes & Details (Optional)</label>
+          <textarea id="task-input-desc" class="input-glass textarea-sm" placeholder="Add any links, steps, or reminders..."></textarea>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label" for="task-input-priority">Priority</label>
+            <select id="task-input-priority" class="select-glass">
+              <option value="urgent">🔴 Urgent</option>
+              <option value="high">🟠 High</option>
+              <option value="medium" selected>🔵 Medium</option>
+              <option value="low">⚪ Low</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="task-input-category">Category</label>
+            <select id="task-input-category" class="select-glass">
+              <option value="Work" selected>💼 Primary Job / Work</option>
+              <option value="Study">📚 Study & Upskilling</option>
+              <option value="Part-Time">⚡ Part-Time Job / Gigs</option>
+              <option value="English">🗣️ English Communication</option>
+              <option value="Habits">🚭 Habits & Quit Smoking</option>
+              <option value="Personal">🏡 Personal & Life</option>
+              <option value="Health">🏃 Health & Fitness</option>
+              <option value="Finance">💰 Finance & Bills</option>
+              <option value="Errands">🛒 Errands</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="task-input-status">Status</label>
+            <select id="task-input-status" class="select-glass">
+              <option value="todo" selected>To Do</option>
+              <option value="in-progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="task-input-due-date">Due Date</label>
+            <input type="date" id="task-input-due-date" class="input-glass">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="task-input-due-time">Due Time (Optional)</label>
+            <input type="time" id="task-input-due-time" class="input-glass">
+          </div>
+        </div>
+
+        <!-- Subtasks / Checklist builder -->
+        <div class="form-group">
+          <label class="form-label">Subtasks / Checklist</label>
+          <div class="subtask-builder-list" id="modal-subtask-list">
+            <!-- Dynamic subtask inputs -->
+          </div>
+          <button type="button" class="btn btn-text btn-sm" id="btn-add-subtask-row">+ Add checklist item</button>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-glass" onclick="window.app.closeModals()">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-glow" id="btn-save-task">Save Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: ADD / EDIT EXPENSE & INCOME         -->
+  <!-- ========================================== -->
+  <div class="modal-backdrop" id="modal-expense-backdrop">
+    <div class="modal-card glass-panel" id="modal-expense">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-expense-title">Log Transaction</h3>
+        <button class="btn btn-icon btn-sm modal-close" onclick="window.app.closeModals()">&times;</button>
+      </div>
+      <form id="form-expense">
+        <input type="hidden" id="exp-edit-id" value="">
+
+        <!-- Transaction Type Switcher: Expense vs Income -->
+        <div class="transaction-type-tabs">
+          <button type="button" class="type-tab-btn active" data-type="expense" id="tab-type-expense">
+            🔴 Expense
+          </button>
+          <button type="button" class="type-tab-btn" data-type="income" id="tab-type-income">
+            🟢 Income / Inflow
+          </button>
+        </div>
+        <input type="hidden" id="exp-input-type" value="expense">
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="exp-input-amount">Amount <span class="required">*</span></label>
+            <div class="input-with-symbol">
+              <span class="currency-symbol-tag" id="exp-modal-curr-symbol">₹</span>
+              <input type="number" id="exp-input-amount" class="input-glass" placeholder="0.00" min="0.01" step="any" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="exp-input-category">Category <span class="required">*</span></label>
+            <select id="exp-input-category" class="select-glass" required>
+              <!-- Dynamic Category options according to type -->
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="exp-input-title">Description / Payee <span class="required">*</span></label>
+          <input type="text" id="exp-input-title" class="input-glass" placeholder="e.g., Grocery Mart, Swiggy, Monthly Rent, Salary..." required>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="exp-input-payment">Payment Method</label>
+            <select id="exp-input-payment" class="select-glass">
+              <option value="UPI" selected>UPI / GPay / PhonePe</option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="Debit Card">Debit Card</option>
+              <option value="Cash">Cash</option>
+              <option value="Net Banking">Net Banking</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="exp-input-date">Date & Time</label>
+            <input type="datetime-local" id="exp-input-date" class="input-glass" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="exp-input-notes">Notes or Tag (Optional)</label>
+          <input type="text" id="exp-input-notes" class="input-glass" placeholder="e.g., Dinner with team, Amazon order #1234...">
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-glass" onclick="window.app.closeModals()">Cancel</button>
+          <button type="submit" class="btn btn-emerald btn-glow" id="btn-save-expense">Record Transaction</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: MOBILE INSTALL & APK GUIDE          -->
+  <!-- ========================================== -->
+  <div class="modal-backdrop" id="modal-install-backdrop">
+    <div class="modal-card glass-panel" id="modal-install" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">📱 Use on Mobile / Get APK</h3>
+        <button class="btn btn-icon btn-sm modal-close" onclick="window.app.closeModals()">&times;</button>
+      </div>
+      <div style="padding: 10px 0;">
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 14px; margin-bottom: 16px;">
+          <h4 style="color: var(--emerald); font-size: 15px; margin-bottom: 6px;">⚡ Direct Instant Install (Recommended)</h4>
+          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">
+            Open this on your Android phone's Google Chrome browser &rarr; Tap the <strong>three dots (⋮)</strong> in Chrome &rarr; Tap <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.
+            It installs as a standalone native app icon with full offline support!
+          </p>
+        </div>
+
+        <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-md); padding: 14px;">
+          <h4 style="color: var(--primary); font-size: 15px; margin-bottom: 6px;">📦 Download Raw .APK File</h4>
+          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px;">
+            To generate an official standalone <strong>.apk</strong> file (Zero Java needed):
+          </p>
+          <ol style="font-size: 12px; color: var(--text-muted); padding-left: 20px; line-height: 1.6;">
+            <li>Upload or host this folder (e.g. GitHub/Netlify/Vercel)</li>
+            <li>Paste your URL into <strong><a href="https://www.pwabuilder.com/" target="_blank" style="color: var(--emerald); text-decoration: underline;">PWABuilder.com</a></strong></li>
+            <li>Click <strong>Package for Android</strong> to download your ready-to-install <strong>.apk</strong> directly!</li>
+          </ol>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary w-100" id="btn-trigger-browser-install">
+          Install to this Device Now
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Application Logic Scripts -->
+  <script src="js/storage.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/tasks.js"></script>
+  <script src="js/expenses.js"></script>
+  <script src="js/lifecoach.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
